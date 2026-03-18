@@ -36,3 +36,24 @@ const QMS_TICKET_PAD = 3;
 // Polling interval for realtime updates (milliseconds)
 const QMS_POLL_MS = 1200;
 
+// Database constants for new client system
+const DB_HOST = QMS_DB_HOST;
+const DB_NAME = QMS_DB_NAME;
+const DB_USER = QMS_DB_USER;
+const DB_PASSWORD = QMS_DB_PASS;
+
+/**
+ * Get MySQLi connection
+ */
+function qms_mysqli() {
+  static $mysqli = null;
+  if ($mysqli === null) {
+    $mysqli = new mysqli(QMS_DB_HOST, QMS_DB_USER, QMS_DB_PASS, QMS_DB_NAME);
+    if ($mysqli->connect_error) {
+      throw new Exception('Database connection failed: ' . $mysqli->connect_error);
+    }
+    $mysqli->set_charset('utf8mb4');
+  }
+  return $mysqli;
+}
+

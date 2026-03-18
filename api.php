@@ -2,6 +2,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/lib/queue.php';
+require_once __DIR__ . '/lib/clients.php';
 
 try {
   $action = $_GET['action'] ?? '';
@@ -141,6 +142,92 @@ try {
     $stmt->execute($params);
     $rows = $stmt->fetchAll();
     qms_json(['ok' => true, 'rows' => $rows]);
+  }
+
+  // New client management endpoints
+  if ($action === 'search_clients') {
+    $surname = (string)($_GET['surname'] ?? '');
+    $mysqli = qms_mysqli();
+    
+    // Create QueueManager instance
+    $queueManager = new QueueManager($mysqli);
+    $result = $queueManager->searchClients($surname);
+    
+    qms_json($result);
+  }
+
+  if ($action === 'create_client') {
+    qms_require_post();
+    $body = qms_input_json();
+    $mysqli = qms_mysqli();
+    
+    $queueManager = new QueueManager($mysqli);
+    $result = $queueManager->createClient($body);
+    
+    qms_json($result);
+  }
+
+  if ($action === 'assign_client') {
+    qms_require_post();
+    $body = qms_input_json();
+    $client_id = (int)($body['client_id'] ?? 0);
+    $counter = (string)($body['counter'] ?? '');
+    $purpose = (string)($body['purpose'] ?? '');
+    
+    if ($client_id <= 0 || empty($counter)) {
+      qms_json(['ok' => false, 'error' => 'Invalid client_id or counter'], 400);
+    }
+    
+    $mysqli = qms_mysqli();
+    $queueManager = new QueueManager($mysqli);
+    $result = $queueManager->assignClientToCounter($client_id, (int)$counter, $purpose);
+    
+    qms_json($result);
+  }
+
+  if ($action === 'counter_queue') {
+    $counter = (int)($_GET['counter'] ?? 0);
+    if ($counter <= 0) {
+      qms_json(['ok' => false, 'error' => 'Invalid counter'], 400);
+    }
+    
+    $mysqli = qms_mysqli();
+    $queueManager = new QueueManager($mysqli);
+    $queue = $queueManager->getCounterQueue($counter);
+    
+    qms_json(['ok' => true, 'queue' => $queue]);
+  }
+
+  if ($action === 'call_next_client') {
+    qms_require_post();
+    $body = qms_input_json();
+    $counter = (int)($body['counter'] ?? 0);
+    
+    if ($counter <= 0) {
+      qms_json(['ok' => false, 'error' => 'Invalid counter'], 400);
+    }
+    
+    $mysqli = qms_mysqli();
+    $queueManager = new QueueManager($mysqli);
+    $result = $queueManager->callNextClient($counter);
+    
+    qms_json($result);
+  }
+
+  if ($action === 'complete_service') {
+    qms_require_post();
+    $body = qms_input_json();
+    $entry_id = (int)($body['entry_id'] ?? 0);
+    
+    if ($entry_id <= 0) {
+      qms_json(['ok' => false, 'error' => 'Invalid entry_id'], 400);
+    }
+    
+    $mysqli = qms_mysqli();
+    $queueManager = new QueueManager($mysqli);
+    $result = $queueManager->completeService($entry_id);
+    
+    qms_json($result);
   }
 
   qms_json(['ok' => false, 'error' => 'Unknown action'], 404);
