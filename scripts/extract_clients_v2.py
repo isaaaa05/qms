@@ -39,22 +39,12 @@ def extract_clients_from_excel(excel_file):
         return []
 
 if __name__ == '__main__':
-    # Try to find the Excel file in current directory or parent
-    possible_paths = [
-        '9044 clientlistshort031826135150350.xls',
-        './9044 clientlistshort031826135150350.xls',
-        '../9044 clientlistshort031826135150350.xls',
-        'scripts/../9044 clientlistshort031826135150350.xls',
-    ]
+    # Fixed absolute path to the Excel file
+    excel_path = '/vercel/share/v0-project/9044 clientlistshort031826135150350.xls'
     
-    excel_path = None
-    for path in possible_paths:
-        if os.path.exists(path):
-            excel_path = path
-            break
-    
-    if not excel_path:
+    if not os.path.exists(excel_path):
         print("Error: Could not find Excel file", file=sys.stderr)
+        print(f"Looking for: {excel_path}", file=sys.stderr)
         sys.exit(1)
     
     print(f"[v0] Reading from: {excel_path}", file=sys.stderr)
